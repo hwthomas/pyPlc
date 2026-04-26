@@ -377,6 +377,8 @@ class hardwareInterface():
                 self.isFoccciCape = False
             self.psu = powersupplyInterface()
             self.cableChecker = cableChecker(self.psu)
+            if (getConfigValueBool('evse_pretended_cable_check')):
+                self.cableChecker.setPretendedMode()
 
         self.loopcounter = 0
         self.outvalue = 0
