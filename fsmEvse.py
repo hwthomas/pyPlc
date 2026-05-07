@@ -10,6 +10,7 @@ from pyPlcInfoNumbers import *
 from helpers import prettyHexMessage, combineValueAndMultiplier
 from mytestsuite import *
 from random import random
+from configmodule import getConfigValueBool
 from exiConnector import * # for EXI data handling/converting
 
 stateWaitForSupportedApplicationProtocolRequest = 0
@@ -25,6 +26,8 @@ stateStopped = 9
 
 class fsmEvse():
     def addToTrace(self, s):
+        if not self.traceEnabled:
+            return
         self.callbackAddToTrace("[EVSE] " + s)
 
     def publishStatus(self, infonumber, s, soc=-1):
@@ -484,6 +487,10 @@ class fsmEvse():
         self.callbackAddToTrace = callbackAddToTrace
         self.callbackShowStatus = callbackShowStatus
         self.callbackSoCStatus = callbackSoCStatus
+        # Cache the trace flag once at startup. addToTrace() is called many
+        # times per CurrentDemandReq cycle (~5/s); we avoid re-reading the
+        # config on every call. Must be set before any addToTrace() call.
+        self.traceEnabled = getConfigValueBool("evse_printtrace")
         #todo self.addressManager = addressManager
         self.hardwareInterface = hardwareInterface
         self.addToTrace("initializing fsmEvse")
@@ -518,5 +525,3 @@ if __name__ == "__main__":
     while (True):
         time.sleep(0.1)
         evse.mainfunction()
-
-

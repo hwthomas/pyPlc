@@ -1,4 +1,3 @@
-
 # For serial (including USB-to-serial) interfaces:
 # https://pyserial.readthedocs.io/en/latest/pyserial.html
 # Install pyserial library:
@@ -31,7 +30,7 @@ if (getConfigValue("digital_output_device")=="beaglebone"):
 if (getConfigValue("charge_parameter_backend")=="chademo"):
     # In case we use the CHAdeMO backend, we want to use CAN
     import can
-    
+
 if (getConfigValue("evsemode_environment")=="focccicape"):
     # In case we have the FoccciCape on BeagleBone, we want to use CAN and the GPIOs
     import can
@@ -122,6 +121,8 @@ class hardwareInterface():
                 self.isSerialInterfaceOk = False
 
     def addToTrace(self, s):
+        if not self.traceEnabled:
+            return
         self.callbackAddToTrace("[HARDWAREINTERFACE] " + s)
 
     def displayStateAndSoc(self, infonumber, state, soc):
@@ -263,7 +264,7 @@ class hardwareInterface():
         # uncomment this line, to take the simulated inlet voltage instead of the really measured
         # self.inletVoltage = self.simulatedInletVoltage
         return self.inletVoltage
-        
+
     def getEvsePhysicalVoltage(self):
         return self.EvsePhysicalVoltage
 
@@ -350,17 +351,23 @@ class hardwareInterface():
             GPIO.setup(PinCp, GPIO.OUT) #output for CP
 
         if (getConfigValue("digital_output_device") == "mqtt"):
-        	self.mqttclient = mqtt.Client(client_id="pyplc")
-        	self.mqttclient.on_connect = self.mqtt_on_connect
-        	self.mqttclient.on_disconnect = self.mqtt_on_disconnect
-        	self.mqttclient.on_message = self.mqtt_on_message
-        	self.mqttclient.connect(getConfigValue("mqtt_broker"), 1883, 60)
+            self.mqttclient = mqtt.Client(client_id="pyplc")
+            self.mqttclient.on_connect = self.mqtt_on_connect
+            self.mqttclient.on_disconnect = self.mqtt_on_disconnect
+            self.mqttclient.on_message = self.mqtt_on_message
+            self.mqttclient.connect(getConfigValue("mqtt_broker"), 1883, 60)
 
     def __init__(self, callbackAddToTrace=None, callbackShowStatus=None, homeplughandler=None, mode=C_EVSE_MODE):
         self.callbackAddToTrace = callbackAddToTrace
         self.callbackShowStatus = callbackShowStatus
         self.homeplughandler = homeplughandler
         self.mode = mode
+        # Cache the trace flag once at startup. It is used by addToTrace()
+        # which is called many times per second; we avoid re-reading the
+        # config file on every call. Must be set before any addToTrace() call,
+        # so it stays right at the top of __init__.
+        self.traceEnabled = getConfigValueBool("evse_printtrace")
+
         if (self.mode==C_EVSE_MODE):
             if (getConfigValueBool('evse_simulate_precharge')):
                 self.isPhysicalVoltageSimulated = True
@@ -439,12 +446,12 @@ class hardwareInterface():
     def pevMode_simulatePreCharge(self):
         if (self.simulatedInletVoltage<230):
             self.simulatedInletVoltage = self.simulatedInletVoltage + 1.0 # simulate increasing voltage during PreCharge
-    
+
     def evseMode_physicalVoltageSimulationMainfunction(self):
         # - in precharge state, increase the voltage.
         # - in current demand, keep the voltage (with random jitter).
         # - in welding detection state, ramp down the voltage.
-        
+
         if (self.evseModePowerSupplyMode == "init"):
              self.EvsePhysicalCurrent = 0
              self.simulatedPhysicalVoltage = 2*random() # simulate a small offset in voltage measurement
@@ -459,7 +466,7 @@ class hardwareInterface():
             if (self.simulatedPhysicalVoltage<self.batteryVoltageDuringPrecharge):
                 self.simulatedPhysicalVoltage += 0.5
             self.EvsePhysicalCurrent = 0 # no current flow during precharge
-            
+
         if (self.evseModePowerSupplyMode == "currentdemand"):
             # We have no hardware voltage measurement, and so we faked the precharge, and also keep
             # faking the EVSEPresentVoltage in the CurrentDemand loop.
@@ -469,9 +476,9 @@ class hardwareInterface():
             # We add a small jitter to avoid frozen-looking value.
             self.simulatedPhysicalVoltage = self.batteryVoltageDuringPrecharge + 3*random()
             self.EvsePhysicalCurrent = self.getAccuMaxCurrent() # just say 10A
-            
+
         if (self.evseModePowerSupplyMode == "weldingdetection"):
-            
+
             # simulate the decreasing voltage during the weldingDetection:
             self.simulatedPhysicalVoltage = self.simulatedPhysicalVoltage*0.95 + 3*random()
             self.EvsePhysicalCurrent = 0 # no current flow during welding detection
@@ -479,13 +486,13 @@ class hardwareInterface():
         # finally transfer the float simulated voltage to an integer "official" voltage
         self.EvsePhysicalVoltage = int(self.simulatedPhysicalVoltage*10)/10 # e.g.345
 
-        
+
     def resetCableCheck(self):
         self.cableChecker.resetCableCheck()
 
     def triggerCableCheck(self):
         self.cableChecker.triggerCableCheck()
-    
+
     def isCableCheckFinished(self):
         return self.cableChecker.isCableCheckFinished()
 
@@ -621,10 +628,10 @@ class hardwareInterface():
 
         if (getConfigValue("digital_output_device")=="mqtt"):
             self.mainfunction_mqtt()
-            
+
         if (self.isFoccciCape):
             self.mainfunction_focccicape()
-            
+
         if (self.mode==C_EVSE_MODE):
             self.cableChecker.mainfunction()
             if (self.isPhysicalVoltageSimulated):
@@ -774,7 +781,7 @@ class hardwareInterface():
         except:
             pass # could not transmit the CAN message, just ignore and continue
         # Message 0x67A: MAC address of the PEV
-        if ((self.focccicapeCycleCounter % 30)== 0): # transmit in slower cycle 
+        if ((self.focccicapeCycleCounter % 30)== 0): # transmit in slower cycle
             data8 = []
             data8.extend(self.evseModePevMac)
             nLogFileNumber=getLogFileNumber()
@@ -790,7 +797,7 @@ class hardwareInterface():
         self.addToTrace(f"MQTT disconnected with result code {rc}")
         self.mqttclient.connect(getConfigValue("mqtt_broker"), 1883, 60)
 
-	# The callback for when the client receives a CONNACK response from the server.
+    # The callback for when the client receives a CONNACK response from the server.
     def mqtt_on_connect(self, client, userdata, flags, rc):
         self.addToTrace(f"MQTT connected with result code {rc}")
 
