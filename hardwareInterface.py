@@ -122,6 +122,8 @@ class hardwareInterface():
                 self.isSerialInterfaceOk = False
 
     def addToTrace(self, s):
+		if not self.traceEnabled:
+            return
         self.callbackAddToTrace("[HARDWAREINTERFACE] " + s)
 
     def displayStateAndSoc(self, infonumber, state, soc):
@@ -379,6 +381,8 @@ class hardwareInterface():
             self.cableChecker = cableChecker(self.psu)
             if (getConfigValueBool('evse_pretended_cable_check')):
                 self.cableChecker.setPretendedMode()
+
+		self.traceEnabled = getConfigValueBool("evse_printtrace")
 
         self.loopcounter = 0
         self.outvalue = 0
