@@ -108,12 +108,13 @@ exiHexDemoSupportedApplicationProtocolRequest2="8000ebab9371d34b9b79d189a98989c1
 # Further examples are collected in the DemoExiLog.txt.
 
 # Configuration of the exi converter tool
+# modified (HWT) for OpenV2G.exe copied to myPlc/src directory
 if os.name == "nt":
     # Windows: Path to the EXI decoder/encoder
-    pathToOpenV2GExe = "..\\OpenV2Gx\\Release\\OpenV2G.exe"
+    pathToOpenV2GExe = "..\\OpenV2G.exe"
 else:
     # Linux: Path to the EXI decoder/encoder
-    pathToOpenV2GExe = "../OpenV2Gx/Release/OpenV2G.exe";
+    pathToOpenV2GExe = "../OpenV2G.exe";
 
 
 # Functions

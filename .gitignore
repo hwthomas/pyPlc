@@ -1,13 +1,14 @@
 .*
 /__pycache__/
 /doc/*.jar
-*.bat
 PevExiLog*.txt
 DemoExiLog.txt.decoded.txt
 testresults.txt
+*.bat
+*.exe
 *.ini
-/log
-/local
 *.bak
 *.pyc
+/log
+/local
 

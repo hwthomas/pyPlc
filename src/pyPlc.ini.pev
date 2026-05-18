@@ -28,7 +28,7 @@ eth_windows_interface_name = \Device\NPF_{E4B8176C-8516-4D48-88BC-85225ABCF259}
 
 # If a display is connected via serial line, e.g. an WIFI-KIT-32 running the software from https://github.com/uhi22/SerialToOLED
 # Possible values: yes or no
-display_via_serial = yes
+display_via_serial = no
 
 # LightBulbDemo turns on the relay with a short delay in the charging loop, to stabilize the voltage
 # before the resistive load is connected.
@@ -55,10 +55,11 @@ evse_simulate_precharge = yes
 #  dieter: Serial controlled device, which controls the digital outputs. E.g. arduino from https://github.com/uhi22/dieter
 #  beaglebone: GPIO pins of the beagleBone, as used in https://github.com/jsphuebner/pyPLC/tree/beaglebone
 #  celeron55device: Serial controlled device as used in https://openinverter.org/forum/viewtopic.php?p=56192#p56192
-digital_output_device = dieter
+#digital_output_device = dieter
 #digital_output_device = beaglebone
 #digital_output_device = celeron55device
 #digital_output_device = mqtt
+digital_output_device = None
 
 
 # Device to read the physically measured inlet voltage in PevMode
@@ -67,9 +68,9 @@ digital_output_device = dieter
 #  none: if no measurement is intended.
 #  celeron55device: as used in https://openinverter.org/forum/viewtopic.php?p=56192#p56192
 #analog_input_device = dieter
-analog_input_device = none
 #analog_input_device = celeron55device
 #analog_input_device = mqtt
+analog_input_device = none
 
 
 # Criteria for ending the PreCharge phase in PevMode
@@ -142,7 +143,7 @@ testsuite_enable = No
 # For development purposes, set this to "Yes".
 # For daily use, set this to "No". There is the risk that the broadcast UDP packets disturb the charger,
 # which may lead to unwanted aborts.
-udp_syslog_enable = Yes
+udp_syslog_enable = No
 
 # Set backend for obtaining charging parameters, we start with CHAdeMO CAN for now
 # Need to make a simulator device and maybe a celeron device?
